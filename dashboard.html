@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Data Scientist with DataSentinel AI</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+            git        colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        },
+                        darkbg: '#0b0f17',
+                        darkcard: '#131b2e',
+                        darkborder: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome / Phosphor Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card {
+            background: rgba(19, 27, 46, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .light .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-darkbg text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-darkcard/80 border-b border-darkborder sticky top-0 z-40 backdrop-blur-md px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <button id="mobile-menu-btn" class="md:hidden text-slate-400 hover:text-white">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+            <div class="flex items-center space-x-2">
+                <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-2 rounded-xl text-white shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-robot text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base leading-none text-white flex items-center gap-2">
+                        DataSentinel AI <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full border border-blue-500/30">v2.4 Auto</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Autonomous Data Scientist Engine</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Dataset Switcher & Actions -->
+        <div class="flex items-center space-x-3">
+            <div class="hidden sm:flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+                <i class="fa-solid fa-database text-blue-400 text-xs"></i>
+                <label class="text-xs text-slate-300 font-medium">Dataset:</label>
+                <select id="dataset-selector" class="bg-transparent text-xs text-white focus:outline-none font-semibold cursor-pointer">
+                    <option value="student_corrupted" selected class="bg-slate-900 text-slate-100">Student Performance (Corrupted Baseline)</option>
+                    <option value="titanic" class="bg-slate-900 text-slate-100">Titanic Passenger Survival</option>
+                    <option value="churn" class="bg-slate-900 text-slate-100">Telco Customer Churn</option>
+                    <option value="housing" class="bg-slate-900 text-slate-100">California House Prices</option>
+                    <option value="sensor" class="bg-slate-900 text-slate-100">Industrial Sensor Drift Data</option>
+                </select>
+            </div>
+
+            <button id="theme-toggle" class="p-2 text-slate-400 hover:text-white rounded-lg bg-slate-800/60 border border-slate-700">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+            <button id="run-pipeline-btn" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs px-3.5 py-2 rounded-lg font-medium shadow-md transition-all flex items-center gap-1.5">
+                <i class="fa-solid fa-play text-xs"></i>
+                <span class="hidden md:inline">Run Full Workflow</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="w-64 bg-darkcard/50 border-r border-darkborder flex flex-col justify-between hidden md:flex shrink-0">
+            <div class="p-3 space-y-1 overflow-y-auto">
+                <div class="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Workflow Modules</div>
+                <nav class="space-y-1">
+                    <button data-target="view-dashboard" class="nav-btn active w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-colors text-blue-400 bg-blue-500/10 border border-blue-500/20">
+                        <i class="fa-solid fa-chart-pie w-4 text-center"></i>
+                        <span>1. Dashboard Overview</span>
+                    </button>
+                    <button data-target="view-inspector" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-magnifying-glass w-4 text-center"></i>
+                        <span>2. Dataset Inspector</span>
+                    </button>
+                    <button data-target="view-datasentinel" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-shield-halved w-4 text-center text-amber-400"></i>
+                        <span>3. DataSentinel AI Quality</span>
+                    </button>
+                    <button data-target="view-preprocessing" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-filter w-4 text-center"></i>
+                        <span>4. Preprocessing & Clean</span>
+                    </button>
+                    <button data-target="view-eda" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-chart-line w-4 text-center"></i>
+                        <span>5. Automated EDA</span>
+                    </button>
+                    <button data-target="view-feature" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-code-branch w-4 text-center"></i>
+                        <span>6. Feature Engineering</span>
+                    </button>
+                    <button data-target="view-automl" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-brain w-4 text-center text-purple-400"></i>
+                        <span>7. AutoML & Engine</span>
+                    </button>
+                    <button data-target="view-ai-chat" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-comments w-4 text-center text-emerald-400"></i>
+                        <span>8. AI Insights & Chat</span>
+                    </button>
+                    <button data-target="view-alerts" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-bell w-4 text-center text-rose-400"></i>
+                        <span>9. Drift & Alerts Log</span>
+                    </button>
+                    <button data-target="view-reports" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-colors">
+                        <i class="fa-solid fa-file-export w-4 text-center"></i>
+                        <span>10. Report & Export</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Agent System Status Footer -->
+            <div class="p-3 border-t border-darkborder bg-slate-900/40">
+                <div class="text-[11px] font-semibold text-slate-400 mb-2 flex items-center justify-between">
+                    <span>Agent Orchestrator</span>
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                </div>
+                <div class="space-y-1.5 text-[10px] text-slate-400">
+                    <div class="flex justify-between">
+                        <span>Active Agents:</span>
+                        <span class="text-slate-200 font-mono">8 / 8 Online</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Orchestrator Mode:</span>
+                        <span class="text-blue-400 font-medium">Autonomous</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content View Area -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+
+            <!-- PAGE 1: DASHBOARD OVERVIEW -->
+            <section id="view-dashboard" class="page-view space-y-6">
+                <!-- Top Summary Banner -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="glass-card p-4 rounded-xl border border-slate-700/60 relative overflow-hidden">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-medium text-slate-400">Data Quality Score</p>
+                                <h3 id="dash-quality-score" class="text-3xl font-extrabold text-amber-400 mt-1">58 <span class="text-sm font-normal text-slate-400">/ 100</span></h3>
+                            </div>
+                            <div class="p-2.5 bg-amber-500/10 rounded-lg text-amber-400 border border-amber-500/20">
+                                <i class="fa-solid fa-shield-heart text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-xs text-amber-400/90 bg-amber-500/10 px-2 py-1 rounded w-max font-medium">
+                            Status: Moderate Corruption Detected
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-4 rounded-xl border border-slate-700/60">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-medium text-slate-400">Dataset Shape</p>
+                                <h3 id="dash-shape" class="text-2xl font-bold text-white mt-1">1,000 <span class="text-xs font-normal text-slate-400">rows</span> × 10 <span class="text-xs font-normal text-slate-400">cols</span></h3>
+                            </div>
+                            <div class="p-2.5 bg-blue-500/10 rounded-lg text-blue-400 border border-blue-500/20">
+                                <i class="fa-solid fa-table text-xl"></i>
+                            </div>
+                        </div>
+                        <p id="dash-target-display" class="mt-3 text-xs text-slate-400">Target Detected: <span class="text-blue-400 font-semibold">Pass_Exam (Binary Classification)</span></p>
+                    </div>
+
+                    <div class="glass-card p-4 rounded-xl border border-slate-700/60">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-medium text-slate-400">Best ML Candidate</p>
+                                <h3 id="dash-best-model" class="text-xl font-bold text-emerald-400 mt-1">Random Forest</h3>
+                            </div>
+                            <div class="p-2.5 bg-emerald-500/10 rounded-lg text-emerald-400 border border-emerald-500/20">
+                                <i class="fa-solid fa-award text-xl"></i>
+                            </div>
+                        </div>
+                        <p id="dash-best-metric" class="mt-3 text-xs text-slate-400">F1-Score: <span class="text-emerald-400 font-semibold">0.892</span> | Accuracy: <span class="text-emerald-400 font-semibold">88.5%</span></p>
+                    </div>
+
+                    <div class="glass-card p-4 rounded-xl border border-slate-700/60">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-medium text-slate-400">Critical Alerts</p>
+                                <h3 id="dash-alert-count" class="text-2xl font-bold text-rose-400 mt-1">4 Issues Flagged</h3>
+                            </div>
+                            <div class="p-2.5 bg-rose-500/10 rounded-lg text-rose-400 border border-rose-500/20">
+                                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-xs text-rose-300">DataSentinel AI action required</p>
+                    </div>
+                </div>
+
+                <!-- Multi-Agent Orchestration Flowchart -->
+                <div class="glass-card p-5 rounded-xl border border-slate-700/60">
+                    <h3 class="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-diagram-project text-blue-400"></i> Multi-Agent Orchestrator Execution Pipeline
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 text-center text-xs">
+                        <div class="bg-blue-900/30 border border-blue-500/40 p-2.5 rounded-lg flex flex-col items-center">
+                            <i class="fa-solid fa-magnifying-glass text-blue-400 text-sm mb-1"></i>
+                            <span class="font-semibold text-slate-200">1. Inspector</span>
+                            <span class="text-[10px] text-emerald-400 mt-1">Completed</span>
+                        </div>
+                        <div class="bg-amber-900/30 border border-amber-500/40 p-2.5 rounded-lg flex flex-col items-center">
+                            <i class="fa-solid fa-shield-halved text-amber-400 text-sm mb-1"></i>
+                            <span class="font-semibold text-slate-200">2. Sentinel</span>
+                            <span class="text-[10px] text-amber-400 mt-1">Score: 58/100</span>
+                        </div>
+                        <div class="bg-purple-900/30 border border-purple-500/40 p-2.5 rounded-lg flex flex-col items-center">
+                            <i class="fa-solid fa-wand-magic-sparkles text-purple-400 text-sm mb-1"></i>
+                            <span class="font-semibold text-slate-200">3. Clean Agent</span>
+                            <span class="text-[10px] text-emerald-400 mt-1">Auto-Remediated</span>
+                        </div>
+                        <div class="bg-cyan-900/30 border border-cyan-500/40 p-2.5 rounded-lg flex flex-col items-center">
+                            <i class="fa-solid fa-chart-column text-cyan-400 text-sm mb-1"></i>
+                            <span class="font-semibold text-slate-200">4. EDA Agent</span>
+                            <span class="text-[10px] text-emerald-400 mt-1">Charts Built</span>
+                        </div>
+                        <div class="bg-indigo-900/30 border border-indigo-500/40 p-2.5 rounded-lg flex flex-col items-center">
+                            <i class="fa-solid fa-sliders text-indigo-400 text-sm mb-1"></i>
+                            <span class="font-semibold text-slate-200">5. Feature Eng</span>
+                            <span class="text-[10px] text-emerald-400 mt-1">8/10 Selected</span>
+                        </div>
+                        <div class="bg-emerald-900/30 border border-emerald-500/40 p-2.5 rounded-lg flex flex-col items-center">
+                            <i class="fa-solid fa-microchip text-emerald-400 text-sm mb-1"></i>
+                            <span class="font-semibold text-slate-200">6. ML Agent</span>
+                            <span class="text-[10px] text-emerald-400 mt-1">5 Models Evaluated</span>
+                        </div>
+                        <div class="bg-rose-900/30 border border-rose-500/40 p-2.5 rounded-lg flex flex-col items-center">
+                            <i class="fa-solid fa-brain text-rose-400 text-sm mb-1"></i>
+                            <span class="font-semibold text-slate-200">7. LLM Explain</span>
+                            <span class="text-[10px] text-emerald-400 mt-1">Insights Ready</span>
+                        </div>
+                        <div class="bg-slate-800 border border-slate-700 p-2.5 rounded-lg flex flex-col items-center">
+                            <i class="fa-solid fa-file-pdf text-slate-300 text-sm mb-1"></i>
+                            <span class="font-semibold text-slate-200">8. Reporter</span>
+                            <span class="text-[10px] text-blue-400 mt-1">Export Ready</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-card p-5 rounded-xl border border-slate-700/60">
+                        <h4 class="text-sm font-semibold text-slate-200 mb-3">Data Quality Score Breakdown</h4>
+                        <div class="h-64 relative">
+                            <canvas id="chart-dash-quality"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-card p-5 rounded-xl border border-slate-700/60">
+                        <h4 class="text-sm font-semibold text-slate-200 mb-3">AutoML Candidate Performance Summary</h4>
+                        <div class="h-64 relative">
+                            <canvas id="chart-dash-models"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 2: DATASET INSPECTOR -->
+            <section id="view-inspector" class="page-view hidden space-y-6">
+                <div class="glass-card p-6 rounded-xl border border-slate-700/60">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-file-csv text-blue-400"></i> Dataset Inspector & Profiler
+                            </h2>
+                            <p class="text-xs text-slate-400">Automatic schema inference, target detection, and missingness profiling.</p>
+                        </div>
+                        <!-- File Upload Mock Dropzone -->
+                        <div class="border-2 border-dashed border-slate-600 hover:border-blue-500 p-3 rounded-lg text-center cursor-pointer bg-slate-800/40 w-full md:w-auto">
+                            <i class="fa-solid fa-cloud-arrow-up text-blue-400 text-lg mb-1"></i>
+                            <p class="text-xs font-medium text-slate-200">Upload New Tabular Dataset (.csv)</p>
+                            <p class="text-[10px] text-slate-400">Auto-detects schema, delimiters & types</p>
+                        </div>
+                    </div>
+
+                    <!-- Target Selector Override -->
+                    <div class="bg-slate-900/60 border border-slate-700/80 p-4 rounded-lg mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        <div>
+                            <span class="text-xs font-semibold text-blue-400 uppercase tracking-wide">Target Column Selection</span>
+                            <p class="text-xs text-slate-300">The Orchestrator automatically selects the best candidate target, but you can override it below.</p>
+                        </div>
+                        <div class="flex items-center space-x-3 w-full md:w-auto">
+                            <label class="text-xs text-slate-400 whitespace-nowrap">Target Variable:</label>
+                            <select id="inspector-target-select" class="bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-xs text-white focus:outline-none font-semibold">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Schema & Data Types Table -->
+                    <h3 class="text-sm font-semibold text-slate-200 mb-3">Inferred Schema & Profiling</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-800/80 text-slate-400 text-[11px] uppercase tracking-wider">
+                                <tr>
+                                    <th class="p-3">Column Name</th>
+                                    <th class="p-3">Inferred Type</th>
+                                    <th class="p-3">Missing Count (%)</th>
+                                    <th class="p-3">Unique Values</th>
+                                    <th class="p-3">Sample Value</th>
+                                    <th class="p-3">Target Eligibility</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inspector-table-body" class="divide-y divide-slate-800">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 3: DATASENTINEL AI QUALITY & ANOMALY SUITE -->
+            <section id="view-datasentinel" class="page-view hidden space-y-6">
+                <div class="glass-card p-6 rounded-xl border border-slate-700/60">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-shield-halved text-amber-400"></i> DataSentinel AI Quality Engine
+                            </h2>
+                            <p class="text-xs text-slate-400">Deep tabular validation: missingness, range errors, class imbalance, and drift.</p>
+                        </div>
+                        <span id="sentinel-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            Data Quality Score: 58 / 100
+                        </span>
+                    </div>
+
+                    <!-- Deductions Breakdown Table -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                            <div class="text-xs font-semibold text-rose-400 mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Range & Impossible Values</div>
+                            <p id="sentinel-range-summary" class="text-xl font-bold text-white">6 Invalid Rows</p>
+                            <p class="text-[11px] text-slate-400 mt-1">E.g. Age = -5, StudyHours = -12, Score = 150%</p>
+                        </div>
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                            <div class="text-xs font-semibold text-amber-400 mb-1"><i class="fa-solid fa-copy"></i> Duplicate Records</div>
+                            <p id="sentinel-dupes-summary" class="text-xl font-bold text-white">12 Exact Duplicate Rows</p>
+                            <p class="text-[11px] text-slate-400 mt-1">Identified across all feature columns</p>
+                        </div>
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                            <div class="text-xs font-semibold text-blue-400 mb-1"><i class="fa-solid fa-chart-line"></i> Anomaly / Outliers (IQR / Isolation Forest)</div>
+                            <p id="sentinel-outliers-summary" class="text-xl font-bold text-white">9 Extreme Outliers</p>
+                            <p class="text-[11px] text-slate-400 mt-1">Flagged beyond 3.0× IQR bounds</p>
+                        </div>
+                    </div>
+
+                    <!-- Ground Truth Corruption Comparison Toggle -->
+                    <div class="bg-slate-800/40 border border-slate-700/60 p-4 rounded-xl">
+                        <h4 class="text-xs font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-bullseye text-blue-400"></i> Ground Truth Corruption Detection Benchmark
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px]">
+                                    <tr>
+                                        <th class="p-2">Injected Issue Category</th>
+                                        <th class="p-2">Injected Ground Truth</th>
+                                        <th class="p-2">DataSentinel AI Detected</th>
+                                        <th class="p-2">Detection Precision</th>
+                                        <th class="p-2">Action Recommended</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sentinel-benchmark-table" class="divide-y divide-slate-800 text-slate-300">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 4: PREPROCESSING & DATA CLEANING -->
+            <section id="view-preprocessing" class="page-view hidden space-y-6">
+                <div class="glass-card p-6 rounded-xl border border-slate-700/60">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-filter text-purple-400"></i> Preprocessing & Cleaning Pipeline
+                            </h2>
+                            <p class="text-xs text-slate-400">Interactive transformation toggles with automated audit logging.</p>
+                        </div>
+                        <button id="apply-prep-btn" class="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold shadow">
+                            Re-Apply Transformations
+                        </button>
+                    </div>
+
+                    <!-- Cleaning Strategy Controls -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
+                            <label class="text-xs font-semibold text-slate-300 block mb-2">Numerical Imputation Strategy</label>
+                            <select id="opt-num-impute" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-white">
+                                <option value="median">Median Imputation (Robust to Outliers)</option>
+                                <option value="mean">Mean Imputation</option>
+                                <option value="knn">KNN Imputing (k=5)</option>
+                            </select>
+                        </div>
+                        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
+                            <label class="text-xs font-semibold text-slate-300 block mb-2">Categorical Encoding</label>
+                            <select id="opt-cat-encode" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-white">
+                                <option value="onehot">One-Hot Encoding (Dummy Variables)</option>
+                                <option value="ordinal">Ordinal / Label Encoding</option>
+                            </select>
+                        </div>
+                        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
+                            <label class="text-xs font-semibold text-slate-300 block mb-2">Outlier Remediation</label>
+                            <select id="opt-outlier-action" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-white">
+                                <option value="cap">Winsorize / IQR Capping (1.5× Bounds)</option>
+                                <option value="drop">Drop Outlier Rows</option>
+                                <option value="keep">Retain As Is</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Audit Log & Preview Split -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-xs font-semibold text-slate-300 mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-emerald-400"></i> Transformation Audit Log
+                            </h4>
+                            <ul id="prep-audit-log" class="space-y-2 text-xs text-slate-300 max-h-60 overflow-y-auto pr-2">
+                                <!-- Dynamic audit entries -->
+                            </ul>
+                        </div>
+
+                        <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-xs font-semibold text-slate-300 mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-table-cells text-blue-400"></i> Sample Row Transformation Comparison
+                            </h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-[11px]">
+                                    <thead class="bg-slate-800 text-slate-400">
+                                        <tr>
+                                            <th class="p-2">Stage</th>
+                                            <th class="p-2">Age</th>
+                                            <th class="p-2">StudyHours</th>
+                                            <th class="p-2">Attendance</th>
+                                            <th class="p-2">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="prep-sample-compare" class="divide-y divide-slate-800">
+                                        <!-- Dynamic -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 5: AUTOMATED EDA & VISUALIZATIONS -->
+            <section id="view-eda" class="page-view hidden space-y-6">
+                <div class="glass-card p-6 rounded-xl border border-slate-700/60">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-cyan-400"></i> Automated Exploratory Data Analysis (EDA)
+                            </h2>
+                            <p class="text-xs text-slate-400">Statistical distributions, correlation matrices, and AI-generated analytical summaries.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-xs font-semibold text-slate-200 mb-3">Feature Distributions & Density</h4>
+                            <div class="h-64 relative">
+                                <canvas id="chart-eda-dist"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-xs font-semibold text-slate-200 mb-3">Feature Correlation Heatmap</h4>
+                            <div class="h-64 relative flex items-center justify-center" id="heatmap-container">
+                                <canvas id="chart-eda-heatmap"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Visual Insights Summary Box -->
+                    <div class="bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border border-blue-500/30 p-4 rounded-xl">
+                        <h4 class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-sparkles"></i> AI Statistical Observations
+                        </h4>
+                        <div id="eda-text-observations" class="text-xs text-slate-300 space-y-1.5 leading-relaxed">
+                            <!-- Dynamic -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 6: FEATURE ENGINEERING & SELECTION -->
+            <section id="view-feature" class="page-view hidden space-y-6">
+                <div class="glass-card p-6 rounded-xl border border-slate-700/60">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-code-branch text-indigo-400"></i> Feature Engineering & Selection Agent
+                            </h2>
+                            <p class="text-xs text-slate-400">Importance scoring via Random Forest, Mutual Info, and SelectKBest.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                            <h4 class="text-xs font-semibold text-slate-200 mb-3">Top Feature Importance (Random Forest Gini Importance)</h4>
+                            <div class="h-64 relative">
+                                <canvas id="chart-feature-importance"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800 space-y-4">
+                            <h4 class="text-xs font-semibold text-slate-200">Feature Action Log</h4>
+                            <div id="feature-actions-list" class="space-y-2 text-xs text-slate-300">
+                                <!-- Dynamic feature log -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 7: AUTOML & MODEL COMPARISON -->
+            <section id="view-automl" class="page-view hidden space-y-6">
+                <div class="glass-card p-6 rounded-xl border border-slate-700/60">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-brain text-purple-400"></i> AutoML & Model Selection Suite
+                            </h2>
+                            <p class="text-xs text-slate-400">Automated candidate training, hyperparameter optimization, and metrics comparison.</p>
+                        </div>
+                        <div class="bg-purple-500/10 border border-purple-500/30 text-purple-300 px-3 py-1.5 rounded-lg text-xs font-medium">
+                            Problem Type Detected: <span id="automl-problem-type" class="font-bold">Classification</span>
+                        </div>
+                    </div>
+
+                    <!-- Candidate Performance Metrics Table -->
+                    <div class="overflow-x-auto mb-6">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-800/80 text-slate-400 text-[11px] uppercase">
+                                <tr>
+                                    <th class="p-3">Model Candidate</th>
+                                    <th class="p-3">Accuracy / R²</th>
+                                    <th class="p-3">Precision / MAE</th>
+                                    <th class="p-3">Recall / RMSE</th>
+                                    <th class="p-3">F1-Score</th>
+                                    <th class="p-3">ROC-AUC</th>
+                                    <th class="p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="automl-models-body" class="divide-y divide-slate-800">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Confusion Matrix / Residuals & Best Model Callout -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                            <h4 id="cm-chart-title" class="text-xs font-semibold text-slate-200 mb-3">Confusion Matrix (Top Candidate: Random Forest)</h4>
+                            <div class="grid grid-cols-2 gap-3 text-center p-4 bg-slate-950 rounded-lg border border-slate-800 font-mono">
+                                <div class="bg-emerald-900/40 p-4 rounded border border-emerald-500/30">
+                                    <span class="text-xs text-slate-400 block">True Positive (TP)</span>
+                                    <span class="text-2xl font-bold text-emerald-400">432</span>
+                                </div>
+                                <div class="bg-rose-900/30 p-4 rounded border border-rose-500/30">
+                                    <span class="text-xs text-slate-400 block">False Positive (FP)</span>
+                                    <span class="text-2xl font-bold text-rose-400">28</span>
+                                </div>
+                                <div class="bg-rose-900/30 p-4 rounded border border-rose-500/30">
+                                    <span class="text-xs text-slate-400 block">False Negative (FN)</span>
+                                    <span class="text-2xl font-bold text-rose-400">31</span>
+                                </div>
+                                <div class="bg-emerald-900/40 p-4 rounded border border-emerald-500/30">
+                                    <span class="text-xs text-slate-400 block">True Negative (TN)</span>
+                                    <span class="text-2xl font-bold text-emerald-400">409</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-purple-900/20 to-blue-900/20 p-5 rounded-xl border border-purple-500/30 flex flex-col justify-between">
+                            <div>
+                                <div class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-1">Recommended Deployment Model</div>
+                                <h3 id="best-model-headline" class="text-xl font-bold text-white mb-2">Random Forest Classifier</h3>
+                                <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                                    Demonstrated superior balance between Precision (0.887) and Recall (0.897) on 5-fold cross-validation. Highly resistant to residual non-linearities and un-scaled numerical features.
+                                </p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-2 rounded-lg font-semibold flex items-center gap-2">
+                                    <i class="fa-solid fa-download"></i> Export Model Pickle (.pkl)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 8: AI EXPLANATION & LLM INSIGHTS -->
+            <section id="view-ai-chat" class="page-view hidden space-y-6">
+                <div class="glass-card p-6 rounded-xl border border-slate-700/60 flex flex-col h-[650px]">
+                    <div class="flex justify-between items-center pb-4 border-b border-slate-700">
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-comments text-emerald-400"></i> AI Data Scientist Assistant
+                            </h2>
+                            <p class="text-xs text-slate-400">Natural language conversation layer powered by context-aware LLM reasoning.</p>
+                        </div>
+                    </div>
+
+                    <!-- Chat Message Area -->
+                    <div id="chat-messages" class="flex-1 overflow-y-auto py-4 space-y-4 pr-2">
+                        <!-- AI Starter Message -->
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div class="bg-slate-800/80 border border-slate-700/80 p-3.5 rounded-xl text-xs text-slate-200 max-w-2xl leading-relaxed">
+                                Hello! I am your <strong>Autonomous Data Scientist Assistant</strong>. I have completed deep quality inspections and model candidate evaluations on your active dataset. You can ask me questions like:
+                                <ul class="list-disc list-inside mt-2 space-y-1 text-slate-300">
+                                    <li><em>Why was the initial Data Quality Score so low?</em></li>
+                                    <li><em>Explain why Random Forest outperformed Logistic Regression.</em></li>
+                                    <li><em>What feature engineering step had the biggest impact?</em></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Bar -->
+                    <div class="pt-3 border-t border-slate-700 flex gap-2">
+                        <input id="chat-input" type="text" placeholder="Ask your Data Scientist AI a question..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                        <button id="chat-send-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-1.5">
+                            <span>Send</span>
+                            <i class="fa-solid fa-paper-plane text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 9: ALERTS & CONTINUOUS DRIFT MONITORING -->
+            <section id="view-alerts" class="page-view hidden space-y-6">
+                <div class="glass-card p-6 rounded-xl border border-slate-700/60">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-bell text-rose-400"></i> Continuous Data Sentinel & Drift Monitor
+                            </h2>
+                            <p class="text-xs text-slate-400">Live system event log and Kolmogorov-Smirnov distribution drift detection.</p>
+                        </div>
+                        <button id="sim-drift-btn" class="bg-rose-600/80 hover:bg-rose-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold">
+                            Simulate Production Drift Event
+                        </button>
+                    </div>
+
+                    <!-- Drift Visualizer -->
+                    <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-800 mb-6">
+                        <h4 class="text-xs font-semibold text-slate-200 mb-3">Data Drift: Baseline vs. Production Streaming Distribution</h4>
+                        <div class="h-60 relative">
+                            <canvas id="chart-drift"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- System Alert Log -->
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">Live Alert Stream</h3>
+                    <div id="alerts-container" class="space-y-2">
+                        <!-- Dynamic Alert Cards -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGE 10: REPORT GENERATOR & EXPORT -->
+            <section id="view-reports" class="page-view hidden space-y-6">
+                <div class="glass-card p-6 rounded-xl border border-slate-700/60">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-file-export text-blue-400"></i> Executive Report Builder
+                            </h2>
+                            <p class="text-xs text-slate-400">Generate publication-ready final-year project documentation & audit logs.</p>
+                        </div>
+                        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded-lg font-semibold flex items-center gap-2">
+                            <i class="fa-solid fa-print"></i> Print / Save as PDF
+                        </button>
+                    </div>
+
+                    <!-- Executive Summary View -->
+                    <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-6 text-slate-300 text-xs">
+                        <div class="border-b border-slate-800 pb-4 flex justify-between items-start">
+                            <div>
+                                <h1 class="text-xl font-bold text-white">Autonomous Data Scientist Execution Report</h1>
+                                <p class="text-slate-400 mt-1">Generated by DataSentinel AI Multi-Agent Core Engine</p>
+                            </div>
+                            <span class="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-1 rounded">Project Stage: Final B.Tech CSE Evaluation</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <span class="text-slate-400 block font-semibold mb-1">Dataset Name:</span>
+                                <span id="rep-ds-name" class="text-white font-mono">student_heavily_corrupted.csv</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block font-semibold mb-1">Data Quality Score:</span>
+                                <span id="rep-quality-score" class="text-amber-400 font-bold">58 / 100 (Remediated to 98/100)</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-slate-200 text-sm mb-2">1. Quality Inspection Summary</h3>
+                            <p class="leading-relaxed">
+                                DataSentinel AI identified 17% overall missingness, 12 duplicate records, and 6 domain range violations (negative study hours and impossible test percentages). All anomalies were isolated and remediated using median imputation and IQR capping.
+                            </p>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-slate-200 text-sm mb-2">2. AutoML Training Results</h3>
+                            <p class="leading-relaxed mb-2">
+                                Five candidate ML models were trained and evaluated using 5-fold cross-validation.
+                            </p>
+                            <div class="bg-slate-900 p-3 rounded border border-slate-800 font-mono text-[11px]">
+                                Selected Best Model: Random Forest Classifier<br>
+                                Accuracy: 88.5% | F1-Score: 0.892 | Precision: 0.887 | Recall: 0.897
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-800 pt-4 text-[10px] text-slate-500 flex justify-between">
+                            <span>Verification Signature: Autonomous DataSentinel AI</span>
+                            <span>System Date: October 2026</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // --- PRESET DATASETS DEFINITION ---
+        const DATASETS = {
+            student_corrupted: {
+                name: "Student Performance (Heavily Corrupted)",
+                shape: "1,000 rows × 10 cols",
+                target: "Pass_Exam (Binary)",
+                problemType: "Classification",
+                qualityScore: 58,
+                alertCount: 4,
+                bestModel: "Random Forest",
+                bestF1: "0.892",
+                bestAcc: "88.5%",
+                schema: [
+                    { col: "StudentID", type: "Integer", missing: "0 (0%)", unique: "1000", sample: "1001", target: "ID Column" },
+                    { col: "Age", type: "Integer", missing: "45 (4.5%)", unique: "12", sample: "-5 (Invalid)", target: "Feature" },
+                    { col: "StudyHours", type: "Float", missing: "120 (12.0%)", unique: "85", sample: "-12 (Invalid)", target: "Feature" },
+                    { col: "AttendanceRate", type: "Float", missing: "80 (8.0%)", unique: "92", sample: "150% (Invalid)", target: "Feature" },
+                    { col: "ParentalEducation", type: "Categorical", missing: "30 (3.0%)", unique: "4", sample: "Bachelor", target: "Feature" },
+                    { col: "Pass_Exam", type: "Binary (0/1)", missing: "0 (0%)", unique: "2", sample: "1", target: "Primary Target" }
+                ],
+                benchmark: [
+                    { category: "Impossible Ranges", truth: "6 Negative/Over-100 values", detected: "6 Flags Detected", precision: "100%", action: "Capped to valid range" },
+                    { category: "Duplicate Rows", truth: "12 Exact Copies", detected: "12 Dupes Flagged", precision: "100%", action: "Deduplicated" },
+                    { category: "Extreme Outliers", truth: "9 Synthetic Spikes", detected: "9 IQR Outliers", precision: "100%", action: "Winsorized" }
+                ],
+                observations: [
+                    "Strong positive correlation (0.78) detected between StudyHours and Pass_Exam.",
+                    "Missing values in StudyHours (12%) non-randomly correlated with low AttendanceRate.",
+                    "Class distribution: 52% Pass / 48% Fail (Balanced Target)."
+                ],
+                models: [
+                    { name: "Random Forest Classifier", acc: "0.885", prec: "0.887", rec: "0.897", f1: "0.892", auc: "0.941", best: true },
+                    { name: "Gradient Boosting (XGBoost)", acc: "0.872", prec: "0.865", rec: "0.880", f1: "0.872", auc: "0.932", best: false },
+                    { name: "Logistic Regression", acc: "0.791", prec: "0.780", rec: "0.810", f1: "0.795", auc: "0.854", best: false },
+                    { name: "Decision Tree", acc: "0.812", prec: "0.805", rec: "0.820", f1: "0.812", auc: "0.810", best: false }
+                ]
+            },
+            titanic: {
+                name: "Titanic Passenger Survival",
+                shape: "891 rows × 12 cols",
+                target: "Survived (Binary)",
+                problemType: "Classification",
+                qualityScore: 82,
+                alertCount: 2,
+                bestModel: "Gradient Boosting",
+                bestF1: "0.841",
+                bestAcc: "85.2%",
+                schema: [
+                    { col: "PassengerId", type: "Integer", missing: "0 (0%)", unique: "891", sample: "1", target: "ID Column" },
+                    { col: "Survived", type: "Binary", missing: "0 (0%)", unique: "2", sample: "1", target: "Primary Target" },
+                    { col: "Pclass", type: "Integer", missing: "0 (0%)", unique: "3", sample: "3", target: "Feature" },
+                    { col: "Age", type: "Float", missing: "177 (19.8%)", unique: "88", sample: "22.0", target: "Feature" },
+                    { col: "Fare", type: "Float", missing: "0 (0%)", unique: "248", sample: "7.25", target: "Feature" }
+                ],
+                benchmark: [
+                    { category: "Missing Cabin Data", truth: "687 Missing Strings", detected: "687 Flagged", precision: "100%", action: "Grouped as 'Unknown'" },
+                    { category: "Fare Outliers", truth: "15 High Fares", detected: "15 IQR Flags", precision: "100%", action: "Log Transformed" }
+                ],
+                observations: [
+                    "Sex and Pclass have the highest predictive power for Survived.",
+                    "Age exhibits 19.8% missingness requiring median imputation by class."
+                ],
+                models: [
+                    { name: "Gradient Boosting", acc: "0.852", prec: "0.840", rec: "0.842", f1: "0.841", auc: "0.895", best: true },
+                    { name: "Random Forest", acc: "0.838", prec: "0.825", rec: "0.830", f1: "0.827", auc: "0.881", best: false },
+                    { name: "Logistic Regression", acc: "0.795", prec: "0.772", rec: "0.780", f1: "0.776", auc: "0.842", best: false }
+                ]
+            },
+            housing: {
+                name: "California House Prices",
+                shape: "2,064 rows × 9 cols",
+                target: "MedHouseValue (Continuous)",
+                problemType: "Regression",
+                qualityScore: 91,
+                alertCount: 1,
+                bestModel: "LightGBM Regressor",
+                bestF1: "N/A (R²: 0.82)",
+                bestAcc: "R²: 0.821",
+                schema: [
+                    { col: "MedInc", type: "Float", missing: "0 (0%)", unique: "1800", sample: "8.32", target: "Feature" },
+                    { col: "HouseAge", type: "Float", missing: "0 (0%)", unique: "52", sample: "41.0", target: "Feature" },
+                    { col: "MedHouseValue", type: "Float", missing: "0 (0%)", unique: "1900", sample: "4.52", target: "Primary Target" }
+                ],
+                benchmark: [
+                    { category: "Value Capping", truth: "High End Capping at 5.0", detected: "Detected Peak", precision: "100%", action: "Flagged Capped Target" }
+                ],
+                observations: [
+                    "MedInc (Median Income) displays linear correlation (0.68) with MedHouseValue.",
+                    "Geographic clusters identified via Latitude / Longitude coordinates."
+                ],
+                models: [
+                    { name: "LightGBM Regressor", acc: "R²: 0.821", prec: "MAE: 0.32", rec: "RMSE: 0.45", f1: "N/A", auc: "N/A", best: true },
+                    { name: "Random Forest Regressor", acc: "R²: 0.805", prec: "MAE: 0.35", rec: "RMSE: 0.48", f1: "N/A", auc: "N/A", best: false },
+                    { name: "Linear Regression", acc: "R²: 0.602", prec: "MAE: 0.53", rec: "RMSE: 0.72", f1: "N/A", auc: "N/A", best: false }
+                ]
+            }
+        };
+
+        // Current state tracker
+        let currentKey = "student_corrupted";
+        let activeCharts = {};
+
+        // --- DOM INITIALIZATION & NAVIGATION ---
+        document.addEventListener("DOMContentLoaded", () => {
+            initNavigation();
+            initDatasetSwitcher();
+            initChatAssistant();
+            loadDatasetView(currentKey);
+        });
+
+        function initNavigation() {
+            const navBtns = document.querySelectorAll(".nav-btn");
+            const pages = document.querySelectorAll(".page-view");
+
+            navBtns.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const target = btn.getAttribute("data-target");
+                    
+                    // Toggle active classes
+                    navBtns.forEach(b => {
+                        b.classList.remove("active", "text-blue-400", "bg-blue-500/10", "border", "border-blue-500/20");
+                        b.classList.add("text-slate-400");
+                    });
+                    btn.classList.add("active", "text-blue-400", "bg-blue-500/10", "border", "border-blue-500/20");
+                    btn.classList.remove("text-slate-400");
+
+                    // Show target view
+                    pages.forEach(p => {
+                        if (p.id === target) {
+                            p.classList.remove("hidden");
+                        } else {
+                            p.classList.add("hidden");
+                        }
+                    });
+
+                    // Resize active chart canvases on tab switch
+                    window.dispatchEvent(new Event('resize'));
+                });
+            });
+        }
+
+        function initDatasetSwitcher() {
+            const selector = document.getElementById("dataset-selector");
+            selector.addEventListener("change", (e) => {
+                const key = e.target.value;
+                if (DATASETS[key]) {
+                    currentKey = key;
+                    loadDatasetView(key);
+                } else {
+                    // Fallback to corrupted
+                    currentKey = "student_corrupted";
+                    loadDatasetView("student_corrupted");
+                }
+            });
+
+            document.getElementById("apply-prep-btn").addEventListener("click", () => {
+                const auditLog = document.getElementById("prep-audit-log");
+                const numOpt = document.getElementById("opt-num-impute").value;
+                const catOpt = document.getElementById("opt-cat-encode").value;
+                
+                const time = new Date().toLocaleTimeString();
+                const newEntry = document.createElement("li");
+                newEntry.className = "text-emerald-400 font-mono text-[11px]";
+                newEntry.innerHTML = `<i class="fa-solid fa-check text-xs mr-1"></i> [${time}] Re-applied ${numOpt.toUpperCase()} imputation & ${catOpt.toUpperCase()} encoding. Quality Score restored to 98/100.`;
+                auditLog.prepend(newEntry);
+            });
+        }
+
+        // --- MAIN DATASET RENDERER ---
+        function loadDatasetView(key) {
+            const data = DATASETS[key] || DATASETS["student_corrupted"];
+
+            // 1. Dashboard Overview Updates
+            document.getElementById("dash-quality-score").innerHTML = `${data.qualityScore} <span class="text-sm font-normal text-slate-400">/ 100</span>`;
+            document.getElementById("dash-shape").innerHTML = data.shape;
+            document.getElementById("dash-target-display").innerHTML = `Target Detected: <span class="text-blue-400 font-semibold">${data.target}</span>`;
+            document.getElementById("dash-best-model").innerText = data.bestModel;
+            document.getElementById("dash-best-metric").innerHTML = `F1-Score: <span class="text-emerald-400 font-semibold">${data.bestF1}</span> | Primary: <span class="text-emerald-400 font-semibold">${data.bestAcc}</span>`;
+            document.getElementById("dash-alert-count").innerText = `${data.alertCount} Issues Flagged`;
+
+            // Update Inspector Table
+            const inspBody = document.getElementById("inspector-table-body");
+            const targetSelect = document.getElementById("inspector-target-select");
+            inspBody.innerHTML = "";
+            targetSelect.innerHTML = "";
+
+            data.schema.forEach(row => {
+                inspBody.innerHTML += `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="p-3 font-semibold text-white">${row.col}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[10px] text-blue-300">${row.type}</span></td>
+                        <td class="p-3 text-amber-400">${row.missing}</td>
+                        <td class="p-3">${row.unique}</td>
+                        <td class="p-3 font-mono text-slate-400">${row.sample}</td>
+                        <td class="p-3"><span class="text-[10px] ${row.target.includes('Target') ? 'text-emerald-400 font-bold' : 'text-slate-400'}">${row.target}</span></td>
+                    </tr>
+                `;
+
+                targetSelect.innerHTML += `<option value="${row.col}" ${row.target.includes('Target') ? 'selected' : ''}>${row.col}</option>`;
+            });
+
+            // Update DataSentinel Benchmark Table
+            const benchBody = document.getElementById("sentinel-benchmark-table");
+            benchBody.innerHTML = "";
+            data.benchmark.forEach(b => {
+                benchBody.innerHTML += `
+                    <tr class="hover:bg-slate-800/40">
+                        <td class="p-2 font-medium text-slate-200">${b.category}</td>
+                        <td class="p-2 text-slate-400">${b.truth}</td>
+                        <td class="p-2 text-emerald-400 font-semibold">${b.detected}</td>
+                        <td class="p-2 text-blue-400">${b.precision}</td>
+                        <td class="p-2"><span class="bg-blue-500/10 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded text-[10px]">${b.action}</span></td>
+                    </tr>
+                `;
+            });
+
+            // Update Preprocessing Audit Log & Samples
+            const auditLog = document.getElementById("prep-audit-log");
+            auditLog.innerHTML = `
+                <li class="text-blue-300 font-mono text-[11px]"><i class="fa-solid fa-info-circle mr-1"></i> [00:01] Preprocessing Agent initialized for ${data.name}.</li>
+                <li class="text-amber-400 font-mono text-[11px]"><i class="fa-solid fa-triangle-exclamation mr-1"></i> [00:02] Imputed missing numerical fields using median strategy.</li>
+                <li class="text-emerald-400 font-mono text-[11px]"><i class="fa-solid fa-check mr-1"></i> [00:03] Outliers capped via Winsorization at 1.5× IQR threshold.</li>
+            `;
+
+            const sampleBody = document.getElementById("prep-sample-compare");
+            sampleBody.innerHTML = `
+                <tr class="bg-rose-950/20 text-rose-300">
+                    <td class="p-2 font-bold">Raw</td>
+                    <td class="p-2">-5 (Invalid)</td>
+                    <td class="p-2">-12.0 (Invalid)</td>
+                    <td class="p-2">150% (Invalid)</td>
+                    <td class="p-2">Uncleaned</td>
+                </tr>
+                <tr class="bg-emerald-950/20 text-emerald-300">
+                    <td class="p-2 font-bold">Cleaned</td>
+                    <td class="p-2">18 (Imputed)</td>
+                    <td class="p-2">4.5 (Median)</td>
+                    <td class="p-2">95% (Capped)</td>
+                    <td class="p-2">Valid / Model-Ready</td>
+                </tr>
+            `;
+
+            // Update EDA Observations
+            const edaBox = document.getElementById("eda-text-observations");
+            edaBox.innerHTML = "";
+            data.observations.forEach(obs => {
+                edaBox.innerHTML += `<p><i class="fa-solid fa-arrow-right-long text-blue-400 mr-1.5 text-[10px]"></i> ${obs}</p>`;
+            });
+
+            // Update Feature Action Log
+            const featureLog = document.getElementById("feature-actions-list");
+            featureLog.innerHTML = `
+                <div class="p-2 bg-slate-800 rounded border border-slate-700">
+                    <span class="font-semibold text-emerald-400 block">Top Feature: StudyHours</span>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Importance Score: 0.421 (Mutual Information: 0.38)</p>
+                </div>
+                <div class="p-2 bg-slate-800 rounded border border-slate-700">
+                    <span class="font-semibold text-blue-400 block">Selected: AttendanceRate</span>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Importance Score: 0.295</p>
+                </div>
+                <div class="p-2 bg-slate-800/50 rounded border border-slate-800 text-slate-500">
+                    <span class="line-through block">Dropped: StudentID</span>
+                    <p class="text-[10px] mt-0.5">Identified as redundant unique primary identifier.</p>
+                </div>
+            `;
+
+            // Update AutoML Table
+            const automlBody = document.getElementById("automl-models-body");
+            document.getElementById("automl-problem-type").innerText = data.problemType;
+            automlBody.innerHTML = "";
+            data.models.forEach(m => {
+                automlBody.innerHTML += `
+                    <tr class="${m.best ? 'bg-purple-900/20 border-l-2 border-purple-500' : ''} hover:bg-slate-800/40">
+                        <td class="p-3 font-semibold text-white flex items-center gap-2">
+                            ${m.name} ${m.best ? '<span class="bg-purple-500 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">BEST</span>' : ''}
+                        </td>
+                        <td class="p-3 text-emerald-400 font-mono">${m.acc}</td>
+                        <td class="p-3 font-mono">${m.prec}</td>
+                        <td class="p-3 font-mono">${m.rec}</td>
+                        <td class="p-3 font-mono text-purple-300 font-bold">${m.f1}</td>
+                        <td class="p-3 font-mono">${m.auc}</td>
+                        <td class="p-3"><span class="text-emerald-400 text-[10px]"><i class="fa-solid fa-circle-check"></i> Trained</span></td>
+                    </tr>
+                `;
+            });
+
+            // Update Alerts Stream
+            const alertBox = document.getElementById("alerts-container");
+            alertBox.innerHTML = `
+                <div class="p-3 bg-rose-950/30 border border-rose-500/40 rounded-lg flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-circle-exclamation text-rose-400 text-base"></i>
+                        <div>
+                            <p class="text-xs font-semibold text-rose-200">Data Quality Score Below Threshold (${data.qualityScore}/100)</p>
+                            <p class="text-[10px] text-rose-300/80">DataSentinel flagged multiple domain violations in active batch.</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded">CRITICAL</span>
+                </div>
+                <div class="p-3 bg-amber-950/30 border border-amber-500/40 rounded-lg flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-400 text-base"></i>
+                        <div>
+                            <p class="text-xs font-semibold text-amber-200">Target Distribution Checked</p>
+                            <p class="text-[10px] text-amber-300/80">Target variable [${data.target}] parsed successfully.</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded">WARNING</span>
+                </div>
+            `;
+
+            // Update Executive Report Elements
+            document.getElementById("rep-ds-name").innerText = data.name;
+            document.getElementById("rep-quality-score").innerText = `${data.qualityScore} / 100 (Remediated)`;
+
+            // Render Charts
+            renderCharts(data);
+        }
+
+        // --- CHART GENERATION FUNCTIONS ---
+        function renderCharts(data) {
+            // Destroy existing chart instances to avoid overlap
+            Object.keys(activeCharts).forEach(key => {
+                if (activeCharts[key]) activeCharts[key].destroy();
+            });
+
+            // 1. Quality Breakdown Chart
+            const ctxQuality = document.getElementById("chart-dash-quality")?.getContext("2d");
+            if (ctxQuality) {
+                activeCharts.quality = new Chart(ctxQuality, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Valid Data', 'Missingness Penalty', 'Duplicate Penalty', 'Range & Outliers'],
+                        datasets: [{
+                            data: [data.qualityScore, 17, 12, 13],
+                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } } }
+                    }
+                });
+            }
+
+            // 2. AutoML Bar Comparison Chart
+            const ctxModels = document.getElementById("chart-dash-models")?.getContext("2d");
+            if (ctxModels) {
+                const modelNames = data.models.map(m => m.name.split(' ')[0]);
+                const f1Scores = data.models.map(m => parseFloat(m.f1) || 0.8);
+                activeCharts.models = new Chart(ctxModels, {
+                    type: 'bar',
+                    data: {
+                        labels: modelNames,
+                        datasets: [{
+                            label: 'F1 / Accuracy Score',
+                            data: f1Scores,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { min: 0.5, max: 1.0, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            // 3. EDA Distribution Chart
+            const ctxDist = document.getElementById("chart-eda-dist")?.getContext("2d");
+            if (ctxDist) {
+                activeCharts.dist = new Chart(ctxDist, {
+                    type: 'line',
+                    data: {
+                        labels: ['0h', '2h', '4h', '6h', '8h', '10h', '12h'],
+                        datasets: [{
+                            label: 'Study Hours Density',
+                            data: [10, 45, 120, 310, 280, 150, 40],
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.15)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                            x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+                        },
+                        plugins: { legend: { labels: { color: '#94a3b8' } } }
+                    }
+                });
+            }
+
+            // 4. Feature Importance Horizontal Bar Chart
+            const ctxFeat = document.getElementById("chart-feature-importance")?.getContext("2d");
+            if (ctxFeat) {
+                activeCharts.feat = new Chart(ctxFeat, {
+                    type: 'bar',
+                    data: {
+                        labels: ['StudyHours', 'AttendanceRate', 'ParentalEdu', 'Age', 'PreviousScore'],
+                        datasets: [{
+                            label: 'Gini Importance',
+                            data: [0.42, 0.29, 0.15, 0.09, 0.05],
+                            backgroundColor: '#8b5cf6',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                            y: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            // 5. Data Drift Chart
+            const ctxDrift = document.getElementById("chart-drift")?.getContext("2d");
+            if (ctxDrift) {
+                activeCharts.drift = new Chart(ctxDrift, {
+                    type: 'line',
+                    data: {
+                        labels: ['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6'],
+                        datasets: [
+                            { label: 'Baseline Distribution', data: [0.5, 0.52, 0.51, 0.49, 0.50, 0.51], borderColor: '#3b82f6', borderDash: [5, 5] },
+                            { label: 'Production Streaming', data: [0.51, 0.53, 0.62, 0.75, 0.82, 0.88], borderColor: '#f43f5e', borderWidth: 2 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                            x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+                        },
+                        plugins: { legend: { labels: { color: '#94a3b8' } } }
+                    }
+                });
+            }
+        }
+
+        // --- AI ASSISTANT CHAT LOGIC ---
+        function initChatAssistant() {
+            const input = document.getElementById("chat-input");
+            const btn = document.getElementById("chat-send-btn");
+            const chatBox = document.getElementById("chat-messages");
+
+            function sendMessage() {
+                const text = input.value.trim();
+                if (!text) return;
+
+                // User Bubble
+                chatBox.innerHTML += `
+                    <div class="flex gap-3 justify-end">
+                        <div class="bg-blue-600 text-white p-3 rounded-xl text-xs max-w-xl leading-relaxed">
+                            ${text}
+                        </div>
+                    </div>
+                `;
+
+                input.value = "";
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                // AI Response Simulation
+                setTimeout(() => {
+                    let aiReply = "I have analyzed your request against the active dataset pipeline. All feature relationships and model evaluation metrics suggest optimal alignment with our automated preprocessing pipeline.";
+                    
+                    const lower = text.toLowerCase();
+                    if (lower.includes("quality") || lower.includes("score")) {
+                        aiReply = `The initial Data Quality Score for <strong>${DATASETS[currentKey].name}</strong> was calculated at <strong>${DATASETS[currentKey].qualityScore}/100</strong> due to flagged invalid domain ranges (negative values), 12 exact row duplicates, and missing study hours.`;
+                    } else if (lower.includes("model") || lower.includes("random forest")) {
+                        aiReply = `<strong>Random Forest</strong> outperformed linear candidates because it naturally constructs non-linear decision boundaries without requiring explicit feature scaling, achieving an F1-Score of <strong>${DATASETS[currentKey].bestF1}</strong>.`;
+                    }
+
+                    chatBox.innerHTML += `
+                        <div class="flex gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div class="bg-slate-800/80 border border-slate-700/80 p-3.5 rounded-xl text-xs text-slate-200 max-w-2xl leading-relaxed">
+                                ${aiReply}
+                            </div>
+                        </div>
+                    `;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }, 600);
+            }
+
+            btn.addEventListener("click", sendMessage);
+            input.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+        }
+    </script>
+</body>
+</html>

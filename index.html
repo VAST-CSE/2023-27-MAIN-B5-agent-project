@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Autonomous Data Scientist with DataSentinel AI</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-8 relative overflow-hidden">
+        <!-- Background Accent Glow -->
+        <div class="absolute -top-12 -right-12 w-40 h-40 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-12 -left-12 w-40 h-40 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-indigo-600/20 border border-indigo-500/30 rounded-xl text-indigo-400 mb-3">
+                <i class="fa-solid fa-shield-halved text-xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white tracking-tight">Welcome Back</h1>
+            <p class="text-slate-400 text-sm mt-1">Autonomous Data Scientist with DataSentinel AI</p>
+        </div>
+
+        <!-- Quick Demo Credentials Banner -->
+        <div class="mb-5 bg-slate-800/60 border border-slate-700/60 rounded-lg p-3 text-xs text-slate-300">
+            <div class="flex items-center justify-between mb-1">
+                <span class="font-semibold text-indigo-400"><i class="fa-solid fa-circle-info mr-1"></i> Quick Demo Access:</span>
+                <button type="button" onclick="fillDemoCredentials()" class="text-indigo-300 hover:text-indigo-200 underline">Auto-fill</button>
+            </div>
+            <p class="text-slate-400">Email: <code class="text-slate-200">demo@datasentinel.ai</code></p>
+            <p class="text-slate-400">Password: <code class="text-slate-200">sentinel2026</code></p>
+        </div>
+
+        <!-- Form -->
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email Address</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500"><i class="fa-solid fa-envelope"></i></span>
+                    <input type="email" id="email" required placeholder="demo@datasentinel.ai" 
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                </div>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Password</label>
+                    <a href="#" class="text-xs text-indigo-400 hover:underline">Forgot password?</a>
+                </div>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" id="password" required placeholder="••••••••" 
+                        class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-10 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                    <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300">
+                        <i id="eyeIcon" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center">
+                <input id="remember" type="checkbox" class="h-4 w-4 rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                <label for="remember" class="ml-2 text-xs text-slate-400">Remember this device for 30 days</label>
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 px-4 rounded-lg shadow-lg shadow-indigo-600/30 transition duration-150 flex items-center justify-center gap-2">
+                <span>Sign In to Workspace</span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-xs text-slate-400">
+            Don't have an account yet? 
+            <a href="register.html" class="text-indigo-400 font-semibold hover:underline">Create Account</a>
+        </div>
+    </div>
+
+    <script>
+        function fillDemoCredentials() {
+            document.getElementById('email').value = 'demo@datasentinel.ai';
+            document.getElementById('password').value = 'sentinel2026';
+        }
+
+        function togglePasswordVisibility() {
+            const pwd = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                pwd.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            
+            // Mock session creation
+            const user = {
+                name: email === 'demo@datasentinel.ai' ? 'Demo Data Scientist' : email.split('@')[0],
+                email: email,
+                role: 'data_scientist',
+                token: 'jwt_token_' + Math.random().toString(36).substring(2)
+            };
+            
+            localStorage.setItem('sentinel_user', JSON.stringify(user));
+            alert(`Welcome back, ${user.name}! Authentication verified.`);
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

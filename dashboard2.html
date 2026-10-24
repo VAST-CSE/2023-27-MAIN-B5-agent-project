@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous Data Scientist with DataSentinel AI</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#111827',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        indigo: {
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js for Interactive Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased h-screen overflow-hidden flex flex-col">
+
+    <!-- TOP NAVIGATION HEADER -->
+    <header class="h-16 bg-slate-900/90 border-b border-slate-800 px-6 flex items-center justify-between z-30 shrink-0">
+        <div class="flex items-center gap-3">
+            <button id="sidebarToggle" onclick="toggleSidebar()" class="text-slate-400 hover:text-white p-2 rounded-lg lg:hidden">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-500 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-brain text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base tracking-tight text-white flex items-center gap-2">
+                        DataSentinel AI <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">v2.4 Autonomous</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Autonomous Data Science & Quality Guardrails Platform</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Dataset Selector & User Profile -->
+        <div class="flex items-center gap-4">
+            <!-- Active Dataset Selector -->
+            <div class="hidden md:flex items-center gap-2 bg-slate-800/80 border border-slate-700/60 rounded-lg px-3 py-1.5">
+                <i class="fa-solid fa-database text-indigo-400 text-sm"></i>
+                <span class="text-xs text-slate-400 font-medium">Dataset:</span>
+                <select id="globalDatasetSelect" onchange="switchDataset(this.value)" class="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer">
+                    <option value="student_perf" class="bg-slate-900">Student Performance (Corrupted Baseline)</option>
+                    <option value="titanic" class="bg-slate-900">Titanic Passenger Survival ML Dataset</option>
+                    <option value="customer_churn" class="bg-slate-900">Telecom Customer Churn Records</option>
+                    <option value="house_prices" class="bg-slate-900">Residential House Prices Prediction</option>
+                    <option value="industrial_sensor" class="bg-slate-900">Industrial Sensor Telemetry Stream</option>
+                </select>
+            </div>
+
+            <!-- Notifications Badge -->
+            <button onclick="switchView('alerts')" class="relative p-2 text-slate-400 hover:text-white rounded-lg bg-slate-800/50 hover:bg-slate-800 transition">
+                <i class="fa-solid fa-bell"></i>
+                <span id="alertBadgeCount" class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[10px] font-bold flex items-center justify-center">3</span>
+            </button>
+
+            <!-- User Session Badge -->
+            <div class="flex items-center gap-3 pl-3 border-l border-slate-800">
+                <div class="text-right hidden sm:block">
+                    <div id="sessionUserName" class="text-xs font-bold text-white">Dr. Alex Mercer</div>
+                    <div id="sessionUserRole" class="text-[10px] text-indigo-400 font-medium">Lead Data Scientist</div>
+                </div>
+                <div class="relative group cursor-pointer">
+                    <div class="w-9 h-9 rounded-full bg-slate-800 border-2 border-indigo-500/50 flex items-center justify-center text-indigo-400 font-bold text-sm shadow-inner">
+                        AM
+                    </div>
+                    <!-- Profile Popup Dropdown -->
+                    <div class="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-2 hidden group-hover:block z-50">
+                        <a href="login.html" class="flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition">
+                            <i class="fa-solid fa-right-from-bracket text-rose-400"></i> Log Out / Switch Account
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN WRAPPER -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- SIDEBAR NAVIGATION -->
+        <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 transition-all duration-300 z-20 absolute lg:relative h-full -translate-x-full lg:translate-x-0">
+            <div class="p-3 space-y-1 overflow-y-auto">
+                <div class="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Core Pipeline</div>
+
+                <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-btn active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
+                    <i class="fa-solid fa-chart-pie w-4 text-center text-indigo-400"></i>
+                    <span>Dashboard Overview</span>
+                </button>
+
+                <button onclick="switchView('inspector')" id="nav-inspector" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
+                    <i class="fa-solid fa-table w-4 text-center text-indigo-400"></i>
+                    <span>Dataset Inspector</span>
+                </button>
+
+                <button onclick="switchView('quality')" id="nav-quality" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
+                    <i class="fa-solid fa-shield-virus w-4 text-center text-emerald-400"></i>
+                    <span>DataSentinel Engine</span>
+                </button>
+
+                <button onclick="switchView('preprocessing')" id="nav-preprocessing" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
+                    <i class="fa-solid fa-wand-magic-sparkles w-4 text-center text-amber-400"></i>
+                    <span>Preprocessing Diff</span>
+                </button>
+
+                <div class="px-3 pt-4 pb-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Intelligence & ML</div>
+
+                <button onclick="switchView('eda')" id="nav-eda" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
+                    <i class="fa-solid fa-magnifying-glass-chart w-4 text-center text-sky-400"></i>
+                    <span>Automated EDA</span>
+                </button>
+
+                <button onclick="switchView('features')" id="nav-features" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
+                    <i class="fa-solid fa-gears w-4 text-center text-purple-400"></i>
+                    <span>Feature Engineering</span>
+                </button>
+
+                <button onclick="switchView('automl')" id="nav-automl" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
+                    <i class="fa-solid fa-robot w-4 text-center text-emerald-400"></i>
+                    <span>AutoML Leaderboard</span>
+                </button>
+
+                <div class="px-3 pt-4 pb-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Monitoring & Output</div>
+
+                <button onclick="switchView('chat')" id="nav-chat" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
+                    <i class="fa-solid fa-comments w-4 text-center text-indigo-400"></i>
+                    <span>AI Assistant Chat</span>
+                </button>
+
+                <button onclick="switchView('alerts')" id="nav-alerts" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
+                    <i class="fa-solid fa-triangle-exclamation w-4 text-center text-rose-400"></i>
+                    <span>Drift & Alerts</span>
+                </button>
+
+                <button onclick="switchView('report')" id="nav-report" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 transition">
+                    <i class="fa-solid fa-file-contract w-4 text-center text-teal-400"></i>
+                    <span>Executive Report</span>
+                </button>
+            </div>
+
+            <!-- Sentinel Status Footbar -->
+            <div class="p-3 bg-slate-950/60 border-t border-slate-800">
+                <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        DataSentinel Guard
+                    </span>
+                    <span class="text-emerald-400 font-mono text-[10px]">ACTIVE</span>
+                </div>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full w-full"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN VIEW CONTAINER -->
+        <main class="flex-1 bg-slate-950 overflow-y-auto p-4 md:p-6 space-y-6">
+
+            <!-- 1. DASHBOARD OVERVIEW VIEW -->
+            <section id="view-dashboard" class="view-content space-y-6">
+                <!-- Top Headline -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            Autonomous Pipeline Overview
+                            <span class="text-xs bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-normal">Active Session</span>
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">DataSentinel AI evaluated dataset integrity, executed automated feature transformations, and optimized model hyper-parameters.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="runPipelineAction()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-indigo-600/30">
+                            <i class="fa-solid fa-play"></i> Run Full Pipeline
+                        </button>
+                        <button onclick="switchView('report')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-2">
+                            <i class="fa-solid fa-download"></i> Export PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Metric Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Health Score</div>
+                            <div id="kpiHealthScore" class="text-2xl font-bold text-emerald-400 mt-1">74.2%</div>
+                            <div class="text-[11px] text-emerald-500 mt-0.5"><i class="fa-solid fa-arrow-up"></i> +14% after cleaning</div>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl">
+                            <i class="fa-solid fa-heart-pulse"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Missing Value Rate</div>
+                            <div id="kpiMissingRate" class="text-2xl font-bold text-amber-400 mt-1">11.8%</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">Auto-imputed with MICE</div>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xl">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Best ML Model</div>
+                            <div id="kpiBestModel" class="text-2xl font-bold text-indigo-400 mt-1">XGBoost</div>
+                            <div id="kpiBestScore" class="text-[11px] text-indigo-300 mt-0.5">ROC-AUC: 0.942</div>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-xl">
+                            <i class="fa-solid fa-trophy"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between">
+                        <div>
+                            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Data Drift Alerts</div>
+                            <div id="kpiDriftAlerts" class="text-2xl font-bold text-rose-400 mt-1">2 Features</div>
+                            <div class="text-[11px] text-rose-400/80 mt-0.5">Requires recalibration</div>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 text-xl">
+                            <i class="fa-solid fa-wave-square"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 1 -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Quality Radar Chart -->
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-shield-halved text-emerald-400"></i> Data Quality Radar
+                            </h3>
+                            <span class="text-xs text-slate-400">6 Dimensions</span>
+                        </div>
+                        <div class="relative h-64">
+                            <canvas id="qualityRadarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Stages Chart -->
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl lg:col-span-2 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-diagram-project text-indigo-400"></i> Pipeline Step Execution Timings
+                            </h3>
+                            <span class="text-xs text-emerald-400 font-mono">Total Time: 4.82s</span>
+                        </div>
+                        <div class="relative h-64">
+                            <canvas id="pipelineTimingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. DATASET INSPECTOR VIEW -->
+            <section id="view-inspector" class="view-content hidden space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            Dataset Inspector & Profile
+                        </h2>
+                        <p class="text-xs text-slate-400">Raw dataset records preview, column data types, and missing values distribution.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="downloadCSV()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg border border-slate-700 flex items-center gap-2">
+                            <i class="fa-solid fa-file-csv text-emerald-400"></i> Export Clean CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Metadata -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center">
+                        <div class="text-[10px] uppercase text-slate-400">Total Rows</div>
+                        <div id="inspectorTotalRows" class="text-lg font-bold text-white">1,000</div>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center">
+                        <div class="text-[10px] uppercase text-slate-400">Total Columns</div>
+                        <div id="inspectorTotalCols" class="text-lg font-bold text-white">12</div>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center">
+                        <div class="text-[10px] uppercase text-slate-400">Memory Usage</div>
+                        <div id="inspectorMemory" class="text-lg font-bold text-indigo-400">94.2 KB</div>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center">
+                        <div class="text-[10px] uppercase text-slate-400">Duplicate Rows</div>
+                        <div id="inspectorDuplicates" class="text-lg font-bold text-amber-400">18</div>
+                    </div>
+                </div>
+
+                <!-- Data Preview Table -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+                    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-white">First 10 Data Records</h3>
+                        <span class="text-xs text-slate-400">Corrupted baseline dataset loaded</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="inspectorTable" class="w-full text-left text-xs text-slate-300">
+                            <!-- Injected by JS -->
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. DATASENTINEL AI QUALITY ENGINE VIEW -->
+            <section id="view-quality" class="view-content hidden space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-white">DataSentinel AI Quality Engine</h2>
+                    <p class="text-xs text-slate-400">Automated diagnostic checking completeness, integrity, consistency, and anomaly risk.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Data Sentinel Diagnosis Card -->
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-4">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-shield-check text-emerald-400"></i> Overall Quality Assessment
+                        </h3>
+                        <div class="text-center py-4">
+                            <div id="qualityGaugeValue" class="text-4xl font-extrabold text-emerald-400">74.2 / 100</div>
+                            <div class="text-xs text-slate-400 mt-1">Status: <span class="text-amber-400 font-semibold">MODERATE RISK</span></div>
+                        </div>
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between text-slate-400"><span>Completeness</span><span class="text-amber-400">82%</span></div>
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full"><div class="bg-amber-400 h-1.5 rounded-full" style="width:82%"></div></div>
+                            <div class="flex justify-between text-slate-400"><span>Consistency</span><span class="text-emerald-400">95%</span></div>
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full"><div class="bg-emerald-400 h-1.5 rounded-full" style="width:95%"></div></div>
+                            <div class="flex justify-between text-slate-400"><span>Outlier Score</span><span class="text-rose-400">68%</span></div>
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full"><div class="bg-rose-400 h-1.5 rounded-full" style="width:68%"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Data Quality Issue Logs -->
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl md:col-span-2 space-y-4">
+                        <h3 class="text-sm font-bold text-white">Detected Data Anomaly Flags</h3>
+                        <div class="space-y-3" id="qualityIssueList">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. DATA PREPROCESSING & CLEANING DIFF VIEW -->
+            <section id="view-preprocessing" class="view-content hidden space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Data Preprocessing & Cleaning Diff</h2>
+                        <p class="text-xs text-slate-400">Side-by-side comparison between Raw input data vs. Cleaned & Imputed dataset.</p>
+                    </div>
+                    <button onclick="applyAutoCleaning()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-4 py-2 rounded-xl transition flex items-center gap-2">
+                        <i class="fa-solid fa-sparkles"></i> Execute Auto-Fix Strategy
+                    </button>
+                </div>
+
+                <!-- Side by Side Diff Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Raw Data Panel -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                        <div class="p-3 bg-rose-500/10 border-b border-rose-500/20 flex justify-between items-center">
+                            <span class="text-xs font-bold text-rose-400"><i class="fa-solid fa-xmark-circle mr-1"></i> Before (Raw Data)</span>
+                            <span class="text-[10px] text-rose-300">Missing values & Outliers present</span>
+                        </div>
+                        <div class="p-4 overflow-x-auto">
+                            <table id="tableRawDiff" class="w-full text-left text-xs text-slate-300">
+                                <!-- Injected by JS -->
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Cleaned Data Panel -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                        <div class="p-3 bg-emerald-500/10 border-b border-emerald-500/20 flex justify-between items-center">
+                            <span class="text-xs font-bold text-emerald-400"><i class="fa-solid fa-check-circle mr-1"></i> After (DataSentinel Cleaned)</span>
+                            <span class="text-[10px] text-emerald-300">Imputed & Winsorized</span>
+                        </div>
+                        <div class="p-4 overflow-x-auto">
+                            <table id="tableCleanDiff" class="w-full text-left text-xs text-slate-300">
+                                <!-- Injected by JS -->
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. AUTOMATED EDA VIEW -->
+            <section id="view-eda" class="view-content hidden space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Automated Exploratory Data Analysis (EDA)</h2>
+                    <p class="text-xs text-slate-400">Feature correlations, statistical distribution histograms, and target relationship insights.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Histogram Distribution -->
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                        <h3 class="text-sm font-bold text-white mb-4">Target Feature Distribution</h3>
+                        <div class="relative h-64">
+                            <canvas id="edaHistogramChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Correlation Heatmap Simulation -->
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                        <h3 class="text-sm font-bold text-white mb-4">Feature Correlation Matrix</h3>
+                        <div id="edaCorrelationMatrix" class="grid grid-cols-4 gap-2 text-center text-xs font-mono">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. FEATURE ENGINEERING VIEW -->
+            <section id="view-features" class="view-content hidden space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Automated Feature Engineering</h2>
+                    <p class="text-xs text-slate-400">Interaction terms, polynomial features, and SHAP feature importance ranking.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl lg:col-span-2">
+                        <h3 class="text-sm font-bold text-white mb-4">Feature Importance (SHAP Scores)</h3>
+                        <div class="relative h-72">
+                            <canvas id="featureImportanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-4">
+                        <h3 class="text-sm font-bold text-white">Generated Synthetic Features</h3>
+                        <div class="space-y-3 text-xs" id="generatedFeaturesList">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. AUTOML & MODEL COMPARISON VIEW -->
+            <section id="view-automl" class="view-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">AutoML Candidate Leaderboard</h2>
+                        <p class="text-xs text-slate-400">Automated model training, 5-fold cross-validation, and hyperparameter tuning.</p>
+                    </div>
+                    <span class="text-xs bg-indigo-500/20 text-indigo-400 px-3 py-1 rounded-full border border-indigo-500/30">Target Metric: ROC-AUC</span>
+                </div>
+
+                <!-- Model Leaderboard Table -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-800 text-slate-400 uppercase text-[10px] tracking-wider">
+                                <tr>
+                                    <th class="p-3">Rank</th>
+                                    <th class="p-3">Model Architecture</th>
+                                    <th class="p-3">Accuracy</th>
+                                    <th class="p-3">ROC-AUC / R2</th>
+                                    <th class="p-3">F1-Score</th>
+                                    <th class="p-3">Latency</th>
+                                    <th class="p-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="automlLeaderboardBody" class="divide-y divide-slate-800">
+                                <!-- Injected by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. AI ASSISTANT CHAT VIEW -->
+            <section id="view-chat" class="view-content hidden flex flex-col h-[calc(100vh-120px)] space-y-4">
+                <div class="flex items-center justify-between shrink-0">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">DataSentinel Copilot Chat</h2>
+                        <p class="text-xs text-slate-400">Ask questions about dataset quality, anomaly root causes, or model performance.</p>
+                    </div>
+                </div>
+
+                <!-- Chat Box -->
+                <div class="flex-1 bg-slate-900 border border-slate-800 rounded-xl p-4 overflow-y-auto space-y-4" id="chatContainer">
+                    <!-- Messages Injected by JS -->
+                </div>
+
+                <!-- Chat Input -->
+                <div class="shrink-0 flex gap-2">
+                    <input type="text" id="chatInput" onkeydown="if(event.key === 'Enter') sendChatMessage()" placeholder="Ask DataSentinel AI... e.g. 'Why was XGBoost selected?' or 'What features were imputed?'" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-indigo-500 transition">
+                    <button onclick="sendChatMessage()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 rounded-xl transition flex items-center justify-center">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 9. ALERTS & DATA DRIFT MONITOR VIEW -->
+            <section id="view-alerts" class="view-content hidden space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-white">Data Sentinel Drift & Alert Monitor</h2>
+                    <p class="text-xs text-slate-400">Real-time Kolmogorov-Smirnov statistical testing for production data drift.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-4">
+                        <h3 class="text-sm font-bold text-white">Active Drift Alerts</h3>
+                        <div class="space-y-3" id="driftAlertsList">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl flex flex-col justify-between">
+                        <h3 class="text-sm font-bold text-white mb-4">Feature Distribution Shift (KS-Test)</h3>
+                        <div class="relative h-60">
+                            <canvas id="driftChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 10. EXECUTIVE REPORT GENERATOR VIEW -->
+            <section id="view-report" class="view-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Executive ML & Data Sentinel Report</h2>
+                        <p class="text-xs text-slate-400">Comprehensive summary report for stakeholders, ready for export.</p>
+                    </div>
+                    <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-500 text-xs px-4 py-2 rounded-xl text-white transition flex items-center gap-2">
+                        <i class="fa-solid fa-print"></i> Print / Save PDF
+                    </button>
+                </div>
+
+                <!-- Report Content Preview -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6 text-slate-300 text-xs leading-relaxed max-w-4xl mx-auto shadow-2xl">
+                    <div class="border-b border-slate-800 pb-4 flex justify-between items-center">
+                        <div>
+                            <h1 class="text-lg font-bold text-white uppercase tracking-wider">Autonomous Data Science Audit Report</h1>
+                            <p class="text-xs text-indigo-400">DataSentinel AI Platform Diagnostic</p>
+                        </div>
+                        <div class="text-right text-[10px] text-slate-500">
+                            <div>Generated: Oct 2026</div>
+                            <div>Author: System Auto-Agent</div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-white text-sm">1. Executive Summary</h3>
+                        <p id="reportSummaryText">The dataset was analyzed automatically. DataSentinel detected missingness and performed auto-imputation before training candidate ML models.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-white text-sm">2. Data Quality & Health Score</h3>
+                        <div class="grid grid-cols-3 gap-3 text-center my-2">
+                            <div class="bg-slate-800 p-3 rounded-lg"><div class="text-slate-400 text-[10px]">Quality Score</div><div id="reportQualityScore" class="text-lg font-bold text-emerald-400">74.2%</div></div>
+                            <div class="bg-slate-800 p-3 rounded-lg"><div class="text-slate-400 text-[10px]">Data Drift Status</div><div id="reportDriftStatus" class="text-lg font-bold text-amber-400">Detected</div></div>
+                            <div class="bg-slate-800 p-3 rounded-lg"><div class="text-slate-400 text-[10px]">Champion Model</div><div id="reportChampionModel" class="text-lg font-bold text-indigo-400">XGBoost</div></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-white text-sm">3. Recommendations & Action Items</h3>
+                        <ul class="list-disc pl-4 space-y-1 text-slate-400">
+                            <li>Retrain model on refreshed production stream every 14 days to mitigate feature drift.</li>
+                            <li>Enforce upstream schema validation for incoming student test scores.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+        // Global Dataset Configurations
+        const datasets = {
+            student_perf: {
+                name: "Student Performance (Corrupted Baseline)",
+                rows: "1,000", cols: "12", memory: "94.2 KB", duplicates: "18",
+                healthScore: 74.2, missingRate: "11.8%", bestModel: "XGBoost", bestScore: "ROC-AUC: 0.942", driftAlerts: "2 Features",
+                radar: [82, 95, 68, 88, 90, 75],
+                records: [
+                    { id: 1, name: "Alice Smith", age: 17, score: "88%", attendance: "92%", gpa: 3.8, status: "Pass" },
+                    { id: 2, name: "Bob Jones", age: "NULL", score: "42%", attendance: "65%", gpa: 2.1, status: "Fail" },
+                    { id: 3, name: "Charlie Brown", age: 18, score: "N/A", attendance: "80%", gpa: 3.2, status: "Pass" },
+                    { id: 4, name: "Diana Prince", age: 16, score: "95%", attendance: "98%", gpa: 4.0, status: "Pass" },
+                    { id: 5, name: "Evan Wright", age: 17, score: "-999", attendance: "NULL", gpa: 1.5, status: "Fail" },
+                ],
+                issues: [
+                    { type: "Missing Value", severity: "High", msg: "Column 'age' contains 142 missing NULL values." },
+                    { type: "Outlier Detected", severity: "Medium", msg: "Score column has corrupted value '-999'." },
+                    { type: "Duplicate Rows", severity: "Low", msg: "18 exact duplicate records found in dataset." }
+                ],
+                rawDiff: [
+                    { age: "NULL", score: "-999", status: "Corrupted" },
+                    { age: "18", score: "N/A", status: "Incomplete" }
+                ],
+                cleanDiff: [
+                    { age: "17.2 (Imputed)", score: "64.5 (Fixed)", status: "Clean" },
+                    { age: "18", score: "72.0 (Imputed)", status: "Clean" }
+                ],
+                shap: [0.42, 0.28, 0.18, 0.12],
+                shapLabels: ['Attendance Rate', 'Previous GPA', 'Study Hours', 'Age'],
+                leaderboard: [
+                    { rank: 1, name: "XGBoost Classifier", acc: "94.2%", auc: "0.961", f1: "0.938", latency: "12ms" },
+                    { rank: 2, name: "Random Forest", acc: "92.1%", auc: "0.945", f1: "0.915", latency: "18ms" },
+                    { rank: 3, name: "LightGBM", acc: "91.8%", auc: "0.940", f1: "0.910", latency: "8ms" },
+                    { rank: 4, name: "Logistic Regression", acc: "84.5%", auc: "0.862", f1: "0.830", latency: "2ms" }
+                ]
+            },
+            titanic: {
+                name: "Titanic Passenger Survival ML Dataset",
+                rows: "891", cols: "10", memory: "82.5 KB", duplicates: "0",
+                healthScore: 88.5, missingRate: "7.2%", bestModel: "LightGBM", bestScore: "Acc: 86.4%", driftAlerts: "0 Features",
+                radar: [92, 98, 85, 94, 91, 88],
+                records: [
+                    { id: 1, name: "Braund, Mr. Owen", age: 22, fare: "$7.25", pclass: 3, survived: 0 },
+                    { id: 2, name: "Cumings, Mrs. John", age: 38, fare: "$71.28", pclass: 1, survived: 1 },
+                    { id: 3, name: "Heikkinen, Miss. Laina", age: 26, fare: "$7.92", pclass: 3, survived: 1 },
+                ],
+                issues: [
+                    { type: "Missing Value", severity: "Medium", msg: "Cabin column has 687 missing values (77%)." }
+                ],
+                rawDiff: [{ age: "NaN", fare: "$7.25" }],
+                cleanDiff: [{ age: "28.0 (Median)", fare: "$7.25" }],
+                shap: [0.55, 0.25, 0.12, 0.08],
+                shapLabels: ['Sex', 'Pclass', 'Fare', 'Age'],
+                leaderboard: [
+                    { rank: 1, name: "LightGBM Classifier", acc: "86.4%", auc: "0.892", f1: "0.850", latency: "6ms" },
+                    { rank: 2, name: "Random Forest", acc: "85.1%", auc: "0.880", f1: "0.838", latency: "15ms" }
+                ]
+            }
+        };
+
+        let currentDatasetKey = 'student_perf';
+        let charts = {};
+
+        // Initialize Application
+        window.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            renderCurrentDataset();
+            setupChat();
+        });
+
+        // Navigation Switcher
+        function switchView(viewId) {
+            document.querySelectorAll('.view-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('bg-slate-800', 'text-white'));
+            
+            const activeView = document.getElementById(`view-${viewId}`);
+            if (activeView) activeView.classList.remove('hidden');
+            
+            const activeNav = document.getElementById(`nav-${viewId}`);
+            if (activeNav) activeNav.classList.add('bg-slate-800', 'text-white');
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('-translate-x-full');
+        }
+
+        // Switch Active Dataset
+        function switchDataset(key) {
+            if (!datasets[key]) key = 'student_perf';
+            currentDatasetKey = key;
+            renderCurrentDataset();
+        }
+
+        function renderCurrentDataset() {
+            const data = datasets[currentDatasetKey];
+
+            // Render KPIs
+            document.getElementById('kpiHealthScore').innerText = `${data.healthScore}%`;
+            document.getElementById('kpiMissingRate').innerText = data.missingRate;
+            document.getElementById('kpiBestModel').innerText = data.bestModel;
+            document.getElementById('kpiBestScore').innerText = data.bestScore;
+            document.getElementById('kpiDriftAlerts').innerText = data.driftAlerts;
+
+            // Render Inspector
+            document.getElementById('inspectorTotalRows').innerText = data.rows;
+            document.getElementById('inspectorTotalCols').innerText = data.cols;
+            document.getElementById('inspectorMemory').innerText = data.memory;
+            document.getElementById('inspectorDuplicates').innerText = data.duplicates;
+
+            // Render Table
+            const table = document.getElementById('inspectorTable');
+            if (data.records && data.records.length > 0) {
+                const keys = Object.keys(data.records[0]);
+                let headerHTML = `<thead class="bg-slate-800 text-slate-400 uppercase text-[10px]"><tr>${keys.map(k => `<th class="p-3">${k}</th>`).join('')}</tr></thead>`;
+                let bodyHTML = `<tbody class="divide-y divide-slate-800">${data.records.map(r => `<tr>${keys.map(k => `<td class="p-3">${r[k]}</td>`).join('')}</tr>`).join('')}</tbody>`;
+                table.innerHTML = headerHTML + bodyHTML;
+            }
+
+            // Render Quality Issues
+            const issueBox = document.getElementById('qualityIssueList');
+            issueBox.innerHTML = data.issues.map(iss => `
+                <div class="p-3 bg-slate-800/80 border border-slate-700/60 rounded-lg flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${iss.severity === 'High' ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}">${iss.severity}</span>
+                        <div>
+                            <div class="text-xs font-semibold text-white">${iss.type}</div>
+                            <div class="text-[11px] text-slate-400">${iss.msg}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render Diff Tables
+            renderSimpleTable('tableRawDiff', data.rawDiff);
+            renderSimpleTable('tableCleanDiff', data.cleanDiff);
+
+            // Render AutoML Leaderboard
+            const automlBody = document.getElementById('automlLeaderboardBody');
+            automlBody.innerHTML = data.leaderboard.map(item => `
+                <tr class="hover:bg-slate-800/40">
+                    <td class="p-3 font-bold text-indigo-400">#${item.rank}</td>
+                    <td class="p-3 font-semibold text-white">${item.name}</td>
+                    <td class="p-3">${item.acc}</td>
+                    <td class="p-3 font-mono text-emerald-400">${item.auc}</td>
+                    <td class="p-3">${item.f1}</td>
+                    <td class="p-3 text-slate-400">${item.latency}</td>
+                    <td class="p-3"><button onclick="alert('Model deployed to Sentinel Endpoint!')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] px-2.5 py-1 rounded">Deploy</button></td>
+                </tr>
+            `).join('');
+
+            // Update Radar Chart Data
+            if (charts.radar) {
+                charts.radar.data.datasets[0].data = data.radar;
+                charts.radar.update();
+            }
+
+            // Update SHAP Chart Data
+            if (charts.shap) {
+                charts.shap.data.labels = data.shapLabels;
+                charts.shap.data.datasets[0].data = data.shap;
+                charts.shap.update();
+            }
+
+            // Render Report Highlights
+            document.getElementById('reportQualityScore').innerText = `${data.healthScore}%`;
+            document.getElementById('reportChampionModel').innerText = data.bestModel;
+        }
+
+        function renderSimpleTable(elementId, records) {
+            const table = document.getElementById(elementId);
+            if (!records || records.length === 0) return;
+            const keys = Object.keys(records[0]);
+            let headerHTML = `<thead class="bg-slate-800 text-slate-400 uppercase text-[10px]"><tr>${keys.map(k => `<th class="p-2">${k}</th>`).join('')}</tr></thead>`;
+            let bodyHTML = `<tbody class="divide-y divide-slate-800">${records.map(r => `<tr>${keys.map(k => `<td class="p-2">${r[k]}</td>`).join('')}</tr>`).join('')}</tbody>`;
+            table.innerHTML = headerHTML + bodyHTML;
+        }
+
+        // Initialize Chart.js Graphs
+        function initCharts() {
+            // Quality Radar Chart
+            const ctxRadar = document.getElementById('qualityRadarChart').getContext('2d');
+            charts.radar = new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: ['Completeness', 'Uniqueness', 'Consistency', 'Validity', 'Accuracy', 'Timeliness'],
+                    datasets: [{
+                        label: 'DataSentinel Score',
+                        data: [82, 95, 68, 88, 90, 75],
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        borderColor: '#6366f1',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#6366f1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: { color: '#94a3b8', font: { size: 10 } },
+                            ticks: { display: false, backdropColor: 'transparent' }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Pipeline Timing Chart
+            const ctxTiming = document.getElementById('pipelineTimingChart').getContext('2d');
+            charts.timing = new Chart(ctxTiming, {
+                type: 'bar',
+                data: {
+                    labels: ['Quality Check', 'Imputation', 'Feature Eng', 'AutoML Search', 'Evaluation'],
+                    datasets: [{
+                        label: 'Execution Time (s)',
+                        data: [0.45, 0.82, 1.12, 2.10, 0.33],
+                        backgroundColor: '#4f46e5',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Histogram Chart
+            const ctxHist = document.getElementById('edaHistogramChart').getContext('2d');
+            charts.hist = new Chart(ctxHist, {
+                type: 'bar',
+                data: {
+                    labels: ['0-20%', '20-40%', '40-60%', '60-80%', '80-100%'],
+                    datasets: [{
+                        label: 'Distribution',
+                        data: [45, 120, 380, 290, 165],
+                        backgroundColor: '#0ea5e9',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' } },
+                        y: { ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            // Correlation Matrix Mock
+            const corrBox = document.getElementById('edaCorrelationMatrix');
+            const corrVals = [
+                ['1.00', '0.74', '-0.12', '0.45'],
+                ['0.74', '1.00', '-0.33', '0.62'],
+                ['-0.12', '-0.33', '1.00', '0.05'],
+                ['0.45', '0.62', '0.05', '1.00']
+            ];
+            corrBox.innerHTML = corrVals.map(row => 
+                row.map(v => `<div class="p-3 rounded ${parseFloat(v) > 0.5 ? 'bg-indigo-600/40 text-indigo-300' : 'bg-slate-800 text-slate-400'}">${v}</div>`).join('')
+            ).join('');
+
+            // SHAP Feature Importance Chart
+            const ctxShap = document.getElementById('featureImportanceChart').getContext('2d');
+            charts.shap = new Chart(ctxShap, {
+                type: 'bar',
+                data: {
+                    labels: ['Attendance Rate', 'Previous GPA', 'Study Hours', 'Age'],
+                    datasets: [{
+                        label: 'Mean |SHAP Value|',
+                        data: [0.42, 0.28, 0.18, 0.12],
+                        backgroundColor: '#10b981',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' } },
+                        y: { ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            // Drift Chart
+            const ctxDrift = document.getElementById('driftChart').getContext('2d');
+            charts.drift = new Chart(ctxDrift, {
+                type: 'line',
+                data: {
+                    labels: ['Baseline', 'Batch 1', 'Batch 2', 'Batch 3', 'Batch 4'],
+                    datasets: [
+                        { label: 'Baseline Dist', data: [10, 25, 45, 30, 10], borderColor: '#94a3b8', borderDash: [5,5], fill: false },
+                        { label: 'Current Dist', data: [4, 12, 35, 50, 25], borderColor: '#f43f5e', borderWidth: 2, fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' } },
+                        y: { ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        // AI Chat Assistant Engine
+        function setupChat() {
+            const container = document.getElementById('chatContainer');
+            container.innerHTML = `
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold text-xs">AI</div>
+                    <div class="bg-slate-800 p-3 rounded-xl text-xs text-slate-200 max-w-lg">
+                        Hello! I am <strong>DataSentinel AI Assistant</strong>. How can I help you analyze the currently active dataset?
+                    </div>
+                </div>
+            `;
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const container = document.getElementById('chatContainer');
+            container.innerHTML += `
+                <div class="flex gap-3 justify-end">
+                    <div class="bg-indigo-600 p-3 rounded-xl text-xs text-white max-w-lg">${text}</div>
+                </div>
+            `;
+            input.value = '';
+
+            setTimeout(() => {
+                let reply = "I analyzed the telemetry logs. The dataset has missing values in critical features, which were auto-imputed using MICE before passing to XGBoost.";
+                if (text.toLowerCase().includes("model") || text.toLowerCase().includes("xgboost")) {
+                    reply = "XGBoost achieved the highest ROC-AUC score of 0.942 due to superior handling of non-linear interactions.";
+                }
+                container.innerHTML += `
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-bold text-xs">AI</div>
+                        <div class="bg-slate-800 p-3 rounded-xl text-xs text-slate-200 max-w-lg">${reply}</div>
+                    </div>
+                `;
+                container.scrollTop = container.scrollHeight;
+            }, 600);
+        }
+
+        function runPipelineAction() {
+            alert("Executing DataSentinel Full Autonomous Pipeline: Quality Audit -> Cleaning -> Feature Eng -> AutoML search completed!");
+        }
+
+        function applyAutoCleaning() {
+            alert("DataSentinel Auto-Fix applied! Corrupted scores fixed and missing values imputed successfully.");
+        }
+
+        function downloadCSV() {
+            alert("Cleaned dataset exported to CSV format!");
+        }
+    </script>
+</body>
+</html>
